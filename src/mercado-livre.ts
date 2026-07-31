@@ -95,6 +95,12 @@ export class MercadoLivreScraper {
     let html = "";
     try {
       await page.setViewport({ width: 1920, height: 1080 });
+      await page.setUserAgent(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      );
+      await page.setExtraHTTPHeaders({
+        "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+      });
       await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
       await new Promise((r) => setTimeout(r, 3000));
       html = await page.content();
