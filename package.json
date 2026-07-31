@@ -1,0 +1,51 @@
+{
+  "name": "@afilimax/mercado-livre-scraper",
+  "version": "0.2.0",
+  "type": "commonjs",
+  "description": "Scraper de produtos do Mercado Livre que utiliza a API pública de busca para retornar previews de produtos no formato Afilimax.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/*",
+    "!/**/__tests__"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node ./src/index.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "test": "vitest run"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "afilimax",
+    "mercado livre",
+    "scraper",
+    "produto"
+  ],
+  "author": "Marcuth",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "prettier": "^3.8.1",
+    "prettier-plugin-sort-imports": "^1.8.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "@xcrap/puppeteer-extra-client": "^0.1.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "peerDependencies": {
+    "@afilimax/core": "^0.5.0"
+  }
+}
