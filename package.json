@@ -1,7 +1,15 @@
 {
   "name": "@afilimax/mercado-livre-scraper",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Afilimax/mercado-livre-scraper.git"
+  },
+  "homepage": "https://github.com/Afilimax/mercado-livre-scraper#readme",
+  "bugs": {
+    "url": "https://github.com/Afilimax/mercado-livre-scraper/issues"
+  },
   "description": "Scraper de produtos do Mercado Livre que utiliza a API pública de busca para retornar previews de produtos no formato Afilimax.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
