@@ -3,7 +3,7 @@ import puppeteer from "puppeteer-extra"
 import path from "path"
 import fs from "fs"
 
-import { Marketplace, ScrapedProductPreview } from "@afilimax/core"
+import { Marketplace, ScrapedProduct, ScrapedProductPreview } from "@afilimax/core"
 
 puppeteer.use(StealthPlugin())
 
@@ -13,6 +13,10 @@ export type MercadoLivreScraperSearchProductsOptions = {
     query: string
     limit?: number
     offset?: number
+}
+
+export type MercadoLivreScraperGetProductOptions = {
+    url: string
 }
 
 export class MercadoLivreScraper {
@@ -42,7 +46,9 @@ export class MercadoLivreScraper {
                 "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
                 "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
             ]
+            
             let executablePath: string | undefined
+            
             for (const p of chromePaths) {
                 if (fs.existsSync(p)) {
                     executablePath = p
@@ -331,6 +337,213 @@ export class MercadoLivreScraper {
         }
 
         return items
+    }
+
+    async getProduct({ url }: MercadoLivreScraperGetProductOptions): Promise<ScrapedProduct> {
+        const browser = await this.getBrowser()
+        const page = await browser.newPage()
+
+        let html = ""
+        try {
+            await page.setViewport({ width: 1920, height: 1080 })
+            await page.goto(url, { waitUntil: "networkidle2", timeout: 35000 })
+
+            try {
+                if (typeof page.waitForSelector === "function") {
+                    await page.waitForSelector(".ui-pdp-title, h1, script[type='application/ld+json']", {
+                        timeout: 10000,
+                    })
+                }
+            } catch {
+                // continua
+            }
+
+            html = await page.content()
+        } finally {
+            await page.close()
+        }
+
+        return this.parseProductPage(html, url)
+    }
+
+    private parseProductPage(html: string, url: string): ScrapedProduct {
+        const scrapedAt = new Date().toISOString()
+
+        let jsonLdProduct: any = null
+        const jsonLdMatches = [...html.matchAll(/<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)]
+        for (const match of jsonLdMatches) {
+            try {
+                const parsed = JSON.parse(match[1])
+                const graph = parsed["@graph"] ?? (Array.isArray(parsed) ? parsed : null)
+                if (graph) {
+                    for (const node of graph) {
+                        if (node["@type"] === "Product" && node.name) {
+                            jsonLdProduct = node
+                            break
+                        }
+                    }
+                } else if (parsed["@type"] === "Product" && parsed.name) {
+                    jsonLdProduct = parsed
+                    break
+                }
+            } catch {
+                continue
+            }
+            if (jsonLdProduct) break
+        }
+
+        const urlIdMatch = url.match(/\/(MLB[\d-]+|p\/MLB\d+)|[?&]wid=(MLB\d+)/i)
+        const externalId = urlIdMatch
+            ? (urlIdMatch[2] ?? urlIdMatch[1]?.replace("p/", "") ?? null)
+            : (jsonLdProduct?.sku ?? jsonLdProduct?.productID ?? null)
+
+        let title = jsonLdProduct?.name ?? ""
+        if (!title) {
+            const titleMatch = html.match(/<h1[^>]*class="[^"]*ui-pdp-title[^"]*"[^>]*>([\s\S]*?)<\/h1>/i)
+            if (titleMatch) {
+                title = titleMatch[1].replace(/<[^>]+>/g, "").trim()
+            }
+        }
+        if (!title) {
+            const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)
+            if (h1Match) {
+                title = h1Match[1].replace(/<[^>]+>/g, "").trim()
+            }
+        }
+
+        let description = jsonLdProduct?.description ?? null
+        if (!description) {
+            const descMatch = html.match(/<p[^>]*class="[^"]*ui-pdp-description__content[^"]*"[^>]*>([\s\S]*?)<\/p>/i)
+            if (descMatch) {
+                description = descMatch[1].replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim()
+            }
+        }
+
+        let brand: string | null = null
+        if (jsonLdProduct?.brand) {
+            brand = typeof jsonLdProduct.brand === "string" ? jsonLdProduct.brand : (jsonLdProduct.brand.name ?? null)
+        }
+        if (!brand) {
+            const brandMatch = html.match(/<tr[^>]*>[\s\S]*?<th[^>]*>Marca<\/th>[\s\S]*?<td[^>]*>([\s\S]*?)<\/td>/i)
+            if (brandMatch) {
+                brand = brandMatch[1].replace(/<[^>]+>/g, "").trim()
+            }
+        }
+
+        let priceValue: number | null = null
+        if (jsonLdProduct?.offers) {
+            const raw = jsonLdProduct.offers.price ?? jsonLdProduct.offers.lowPrice
+            priceValue = this.parsePrice(raw)
+        }
+        if (priceValue == null) {
+            const priceCurrentMatch = html.match(/<div[^>]+class="[^"]*ui-pdp-price__second-line[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+            if (priceCurrentMatch) {
+                const fractionMatch = priceCurrentMatch[1].match(/<span[^>]+andes-money-amount__fraction[^>]*>(\d+)<\/span>/i)
+                const centsMatch = priceCurrentMatch[1].match(/<span[^>]+andes-money-amount__cents[^>]*>(\d+)<\/span>/i)
+                if (fractionMatch) {
+                    const fraction = parseInt(fractionMatch[1], 10)
+                    const cents = centsMatch ? parseInt(centsMatch[1], 10) : 0
+                    priceValue = parseFloat(`${fraction}.${String(cents).padStart(2, "0")}`)
+                }
+            }
+        }
+
+        let originalPriceValue: number | null = null
+        const prevPriceMatch = html.match(/<s[^>]+class="[^"]*andes-money-amount--previous[^"]*"[^>]*>([\s\S]*?)<\/s>/i)
+        if (prevPriceMatch) {
+            const fractionMatch = prevPriceMatch[1].match(/<span[^>]+andes-money-amount__fraction[^>]*>(\d+)<\/span>/i)
+            const centsMatch = prevPriceMatch[1].match(/<span[^>]+andes-money-amount__cents[^>]*>(\d+)<\/span>/i)
+            if (fractionMatch) {
+                const fraction = parseInt(fractionMatch[1], 10)
+                const cents = centsMatch ? parseInt(centsMatch[1], 10) : 0
+                originalPriceValue = parseFloat(`${fraction}.${String(cents).padStart(2, "0")}`)
+            }
+        }
+
+        let installment: { count: number; value: number } | null = null
+        const instMatch = html.match(/em\s*(\d+)x\s*(?:de\s*)?R\$\s*([\d,.]+)/i)
+        if (instMatch) {
+            const count = parseInt(instMatch[1], 10)
+            const val = this.parsePrice(instMatch[2])
+            if (count > 0 && val !== null) {
+                installment = { count, value: val }
+            }
+        }
+
+        let ratingAverage: number = 0
+        let totalReviews: number | null = null
+        if (jsonLdProduct?.aggregateRating) {
+            ratingAverage = this.parsePrice(jsonLdProduct.aggregateRating.ratingValue) ?? 0
+            const countRaw = jsonLdProduct.aggregateRating.reviewCount ?? jsonLdProduct.aggregateRating.ratingCount
+            totalReviews = countRaw != null ? parseInt(String(countRaw), 10) : null
+        }
+        if (ratingAverage === 0) {
+            const rateMatch = html.match(/<span[^>]+class="[^"]*ui-pdp-review__ratings[^"]*"[^>]*>([\d,.]+)<\/span>/i)
+            if (rateMatch) {
+                ratingAverage = this.parsePrice(rateMatch[1]) ?? 0
+            }
+        }
+
+        const images: string[] = []
+        if (jsonLdProduct?.image) {
+            const imgs = Array.isArray(jsonLdProduct.image) ? jsonLdProduct.image : [jsonLdProduct.image]
+            for (const img of imgs) {
+                if (typeof img === "string" && img.startsWith("http") && !images.includes(img)) {
+                    images.push(img)
+                }
+            }
+        }
+        if (images.length === 0) {
+            const imgMatches = [...html.matchAll(/<img[^>]+class="[^"]*ui-pdp-gallery__figure__image[^"]*"[^>]+src="([^"]+)"/gi)]
+            for (const m of imgMatches) {
+                if (m[1] && m[1].startsWith("http") && !images.includes(m[1])) images.push(m[1])
+            }
+        }
+
+        const freeShipping = /frete grátis|chegará grátis/i.test(html)
+        const isFull = /ui-pdp-icon--full|full-shipping-text|meli-full/i.test(html)
+
+        const inStock = jsonLdProduct?.offers?.availability
+            ? !String(jsonLdProduct.offers.availability).includes("OutOfStock")
+            : !/produto esgotado|anúncio pausado/i.test(html)
+
+        return {
+            marketplace: Marketplace.MercadoLivre,
+            externalId,
+            title: title || "Produto Mercado Livre",
+            description,
+            brand,
+            price: {
+                value: priceValue ?? 0,
+                originalValue: originalPriceValue,
+                currency: "BRL",
+                pixPrice: null,
+                installment,
+            },
+            shipping: {
+                price: freeShipping ? 0 : null,
+                currency: "BRL",
+                freeShipping,
+                full: isFull,
+                prime: null,
+                estimatedTime: null,
+            },
+            rating: {
+                average: ratingAverage,
+                totalReviews,
+            },
+            availability: {
+                inStock,
+                quantity: null,
+            },
+            images,
+            thumbnails: images.length > 0 ? images : null,
+            categories: null,
+            features: null,
+            specifications: null,
+            coupons: null,
+            scrapedAt,
+        }
     }
 
     async close() {
