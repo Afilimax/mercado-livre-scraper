@@ -10,7 +10,7 @@
   "bugs": {
     "url": "https://github.com/Afilimax/mercado-livre-scraper/issues"
   },
-  "description": "Scraper de produtos do Mercado Livre que utiliza a API pública de busca para retornar previews de produtos no formato Afilimax.",
+  "description": "Scraper resiliente de produtos do Mercado Livre com evasão anti-bot (Puppeteer Stealth) e extração estruturada (JSON-LD e HTML) para o ecossistema Afilimax.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,9 +30,14 @@
   },
   "keywords": [
     "afilimax",
-    "mercado livre",
+    "mercado-livre",
+    "mercadolivre",
     "scraper",
-    "produto"
+    "crawler",
+    "puppeteer-stealth",
+    "ecommerce",
+    "produtos",
+    "afiliados"
   ],
   "author": "Marcuth",
   "license": "MIT",
