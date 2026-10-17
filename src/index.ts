@@ -1,1 +1,1 @@
-export * from "./mercado-livre";
+export * from "./mercado-livre"

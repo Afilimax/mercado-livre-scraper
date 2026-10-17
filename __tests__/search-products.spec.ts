@@ -47,6 +47,8 @@ describe("MercadoLivreScraper – searchProducts", () => {
         const mockPage = {
             setViewport: vi.fn().mockResolvedValue(undefined),
             goto: vi.fn().mockResolvedValue(undefined),
+            url: vi.fn().mockReturnValue("https://lista.mercadolivre.com.br/echo-dot"),
+            waitForSelector: vi.fn().mockResolvedValue(undefined),
             content: vi.fn().mockResolvedValue(sampleJsonLdHtml),
             close: vi.fn().mockResolvedValue(undefined),
         }
@@ -81,6 +83,8 @@ describe("MercadoLivreScraper – searchProducts", () => {
         const mockPage = {
             setViewport: vi.fn().mockResolvedValue(undefined),
             goto: vi.fn().mockResolvedValue(undefined),
+            url: vi.fn().mockReturnValue("https://listado.mercadolivre.com.ar/notebook"),
+            waitForSelector: vi.fn().mockResolvedValue(undefined),
             content: vi.fn().mockResolvedValue(sampleJsonLdHtml),
             close: vi.fn().mockResolvedValue(undefined),
         }
