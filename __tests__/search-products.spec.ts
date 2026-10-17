@@ -79,11 +79,11 @@ describe("MercadoLivreScraper – searchProducts", () => {
         expect(typeof item.scrapedAt).toBe("string")
     })
 
-    it("deve respeitar a propriedade siteId na URL base de busca", async () => {
+    it("deve construir a URL correta do Mercado Livre Brasil com paginação", async () => {
         const mockPage = {
             setViewport: vi.fn().mockResolvedValue(undefined),
             goto: vi.fn().mockResolvedValue(undefined),
-            url: vi.fn().mockReturnValue("https://listado.mercadolivre.com.ar/notebook"),
+            url: vi.fn().mockReturnValue("https://lista.mercadolivre.com.br/notebook_Desde_21"),
             waitForSelector: vi.fn().mockResolvedValue(undefined),
             content: vi.fn().mockResolvedValue(sampleJsonLdHtml),
             close: vi.fn().mockResolvedValue(undefined),
@@ -93,13 +93,13 @@ describe("MercadoLivreScraper – searchProducts", () => {
             close: vi.fn().mockResolvedValue(undefined),
         }
 
-        const scraperMla = new MercadoLivreScraper({ siteId: "MLA" })
-        vi.spyOn(scraperMla as any, "getBrowser").mockResolvedValue(mockBrowser)
+        const scraperTest = new MercadoLivreScraper()
+        vi.spyOn(scraperTest as any, "getBrowser").mockResolvedValue(mockBrowser)
 
-        await scraperMla.searchProducts({ query: "notebook" })
+        await scraperTest.searchProducts({ query: "notebook gamer", offset: 20 })
 
         expect(mockPage.goto).toHaveBeenCalledWith(
-            "https://listado.mercadolivre.com.ar/notebook",
+            "https://lista.mercadolivre.com.br/notebook-gamer_Desde_21",
             expect.objectContaining({ waitUntil: "networkidle2" })
         )
     })

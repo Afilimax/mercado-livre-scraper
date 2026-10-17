@@ -16,7 +16,7 @@ Projetada para contornar desafios avançados de segurança e verificações de a
   - **Primária (JSON-LD)**: Extração rápida e precisa de blocos estruturados Schema.org (`@type: Product`).
   - **Fallback (HTML Poly-Card)**: Extração resiliente via seletores dos cards modernos de listagem com cálculo de preços fracionados, centavos e descontos.
 - **🔍 Retorno Padronizado**: Resultados entregues no formato universal `ScrapedProductPreview` do `@afilimax/core`.
-- **🌎 Suporte Multi-Região**: Configuração simples por `siteId` (`MLB` para Brasil, `MLA` para Argentina, `MLM` para México, etc.).
+- **🇧🇷 Focado no Mercado Livre Brasil**: Extração direcionada exclusivamente para o catálogo brasileiro (`mercadolivre.com.br`).
 - **📦 100% TypeScript**: Tipagem estrita com autocompletar e validação de contratos.
 
 ---
@@ -43,10 +43,8 @@ npm install @afilimax/mercado-livre-scraper
 import { MercadoLivreScraper } from "@afilimax/mercado-livre-scraper";
 
 async function run() {
-    // Inicializa o scraper (padrão Brasil - MLB)
-    const scraper = new MercadoLivreScraper({
-        siteId: "MLB"
-    });
+    // Inicializa o scraper
+    const scraper = new MercadoLivreScraper();
 
     try {
         console.log("Pesquisando produtos...");
@@ -87,13 +85,11 @@ const page2Products = await scraper.searchProducts({
 
 #### `constructor(options?: MercadoLivreScraperOptions)`
 
-| Opção | Tipo | Padrão | Descrição |
-| :--- | :--- | :--- | :--- |
-| `siteId` | `string` | `"MLB"` | Identificador do site/país (`MLB` = Brasil, `MLA` = Argentina, `MLM` = México). |
+Inicializa a instância do scraper para o Mercado Livre Brasil.
 
 #### `searchProducts(options: MercadoLivreScraperSearchProductsOptions): Promise<ScrapedProductPreview[]>`
 
-Realiza a busca de produtos na listagem do Mercado Livre e retorna uma lista padronizada.
+Realiza a busca de produtos na listagem do Mercado Livre Brasil e retorna uma lista padronizada.
 
 | Parâmetro | Tipo | Padrão | Descrição |
 | :--- | :--- | :--- | :--- |

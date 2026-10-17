@@ -7,9 +7,7 @@ import { Marketplace, ScrapedProductPreview } from "@afilimax/core"
 
 puppeteer.use(StealthPlugin())
 
-export type MercadoLivreScraperOptions = {
-    siteId?: string
-}
+export type MercadoLivreScraperOptions = {}
 
 export type MercadoLivreScraperSearchProductsOptions = {
     query: string
@@ -18,31 +16,18 @@ export type MercadoLivreScraperSearchProductsOptions = {
 }
 
 export class MercadoLivreScraper {
-    private readonly siteId: string
     private browser: any = null
 
-    constructor({ siteId = "MLB" }: MercadoLivreScraperOptions = {}) {
-        this.siteId = siteId
-    }
+    constructor(_options: MercadoLivreScraperOptions = {}) {}
 
     private getSearchUrl(query: string, offset: number): string {
         const slug = query.trim().toLowerCase().replace(/\s+/g, "-")
         const offsetParam = offset > 0 ? `_Desde_${offset + 1}` : ""
-        const domainMap: Record<string, string> = {
-            MLB: `https://lista.mercadolivre.com.br/${slug}${offsetParam}`,
-            MLA: `https://listado.mercadolivre.com.ar/${slug}${offsetParam}`,
-            MLM: `https://listado.mercadolibre.com.mx/${slug}${offsetParam}`,
-        }
-        return domainMap[this.siteId] ?? `https://lista.mercadolivre.com.br/${slug}${offsetParam}`
+        return `https://lista.mercadolivre.com.br/${slug}${offsetParam}`
     }
 
     private getHomepageUrl(): string {
-        const domainMap: Record<string, string> = {
-            MLB: "https://www.mercadolivre.com.br",
-            MLA: "https://www.mercadolivre.com.ar",
-            MLM: "https://www.mercadolibre.com.mx",
-        }
-        return domainMap[this.siteId] ?? "https://www.mercadolivre.com.br"
+        return "https://www.mercadolivre.com.br"
     }
 
     private parsePrice(raw: string | number | undefined | null): number | null {
