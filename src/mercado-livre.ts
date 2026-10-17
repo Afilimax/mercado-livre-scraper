@@ -7,7 +7,9 @@ import { Marketplace, ScrapedProduct, ScrapedProductPreview } from "@afilimax/co
 
 puppeteer.use(StealthPlugin())
 
-export type MercadoLivreScraperOptions = {}
+export type MercadoLivreScraperOptions = {
+    headless?: boolean | "shell"
+}
 
 export type MercadoLivreScraperSearchProductsOptions = {
     query: string
@@ -21,8 +23,14 @@ export type MercadoLivreScraperGetProductOptions = {
 
 export class MercadoLivreScraper {
     private browser: any = null
+    private options: MercadoLivreScraperOptions
 
-    constructor(_options: MercadoLivreScraperOptions = {}) {}
+    constructor(options: MercadoLivreScraperOptions = {}) {
+        this.options = {
+            headless: true,
+            ...options,
+        }
+    }
 
     private getSearchUrl(query: string, offset: number): string {
         const slug = query.trim().toLowerCase().replace(/\s+/g, "-")
@@ -56,14 +64,15 @@ export class MercadoLivreScraper {
                 }
             }
 
+            const headless = this.options.headless ?? true
+
             this.browser = await puppeteer.launch({
-                headless: false,
+                headless,
                 ...(executablePath ? { executablePath } : {}),
                 args: [
                     "--no-sandbox",
                     "--disable-setuid-sandbox",
                     "--window-size=1920,1080",
-                    "--window-position=-2000,-2000",
                     "--disable-blink-features=AutomationControlled",
                     "--disable-features=IsolateOrigins,site-per-process",
                     "--disable-web-security",
@@ -91,11 +100,15 @@ export class MercadoLivreScraper {
             await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 })
 
             const finalUrl = typeof page.url === "function" ? page.url() : url
-            console.log(`[ML Debug] URL final: ${finalUrl}`)
+            if (process.env.DEBUG) {
+                console.log(`[ML Debug] URL final: ${finalUrl}`)
+            }
 
             // Se foi redirecionado para verificação/CAPTCHA, abortar cedo
             if (finalUrl.includes("account-verification") || finalUrl.includes("captcha")) {
-                console.log("[ML Debug] Redirecionado para verificação/CAPTCHA, abortando.")
+                if (process.env.DEBUG) {
+                    console.log("[ML Debug] Redirecionado para verificação/CAPTCHA, abortando.")
+                }
                 html = ""
             } else {
                 // Aguardar os cards de produto aparecerem (até 12s)
@@ -111,16 +124,6 @@ export class MercadoLivreScraper {
 
                 await new Promise((r) => setTimeout(r, 2000))
                 html = await page.content()
-
-                // === DIAGNÓSTICO: salvar HTML para inspeção ===
-                const debugPath = path.resolve(process.cwd(), "debug-ml-output.html")
-                fs.writeFileSync(debugPath, html, "utf-8")
-                const jsonLdCount = (html.match(/application\/ld\+json/g) ?? []).length
-                const polyCardCount = (html.match(/poly-card/g) ?? []).length
-                console.log(`[ML Debug] HTML length: ${html.length}`)
-                console.log(`[ML Debug] JSON-LD tags: ${jsonLdCount}`)
-                console.log(`[ML Debug] poly-card occurrences: ${polyCardCount}`)
-                console.log(`[ML Debug] HTML salvo em: ${debugPath}`)
             }
         } finally {
             await page.close()
@@ -130,14 +133,18 @@ export class MercadoLivreScraper {
 
         // Estratégia 1: Extrair via JSON-LD (@graph com Products)
         const jsonLdItems = this.extractFromJsonLd(html, limit, scrapedAt)
-        console.log(`[ML Debug] JSON-LD extraiu: ${jsonLdItems.length} itens`)
+        if (process.env.DEBUG) {
+            console.log(`[ML Debug] JSON-LD extraiu: ${jsonLdItems.length} itens`)
+        }
         if (jsonLdItems.length > 0) {
             return jsonLdItems
         }
 
         // Estratégia 2: Extrair via seletores HTML dos cards .poly-card
         const htmlItems = this.extractFromHtml(html, limit, scrapedAt)
-        console.log(`[ML Debug] HTML extrator extraiu: ${htmlItems.length} itens`)
+        if (process.env.DEBUG) {
+            console.log(`[ML Debug] HTML extrator extraiu: ${htmlItems.length} itens`)
+        }
         return htmlItems
     }
 
