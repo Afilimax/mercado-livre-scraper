@@ -188,9 +188,8 @@ export class MercadoLivreScraper {
                 const thumbnail = images[0] ?? null
 
                 const externalIdMatch = productUrl?.match(/\/(MLB[\d-]+|p\/MLB\d+)|[?&]wid=(MLB\d+)/)
-                const externalId = externalIdMatch
-                    ? (externalIdMatch[2] ?? externalIdMatch[1]?.replace("p/", "") ?? null)
-                    : null
+                // Um dos dois grupos de captura sempre está presente quando há match.
+                const externalId = externalIdMatch ? (externalIdMatch[2] ?? externalIdMatch[1].replace("p/", "")) : null
 
                 const brandRaw = item.brand
                 const brand = typeof brandRaw === "string" ? brandRaw : ((brandRaw as any)?.name ?? null)
@@ -401,7 +400,7 @@ export class MercadoLivreScraper {
 
         const urlIdMatch = url.match(/\/(MLB[\d-]+|p\/MLB\d+)|[?&]wid=(MLB\d+)/i)
         const externalId = urlIdMatch
-            ? (urlIdMatch[2] ?? urlIdMatch[1]?.replace("p/", "") ?? null)
+            ? (urlIdMatch[2] ?? urlIdMatch[1].replace("p/", ""))
             : (jsonLdProduct?.sku ?? jsonLdProduct?.productID ?? null)
 
         let title = jsonLdProduct?.name ?? ""
