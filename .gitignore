@@ -12,3 +12,6 @@ yarn-debug.log*
 .env.*
 debug-*.html
 debug-*.ts
+
+# Coverage
+coverage/
