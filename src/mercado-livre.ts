@@ -1,6 +1,5 @@
 import StealthPlugin from "puppeteer-extra-plugin-stealth"
 import puppeteer from "puppeteer-extra"
-import path from "path"
 import fs from "fs"
 
 import { Marketplace, ScrapedProduct, ScrapedProductPreview } from "@afilimax/core"
@@ -54,9 +53,9 @@ export class MercadoLivreScraper {
                 "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
                 "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
             ]
-            
+
             let executablePath: string | undefined
-            
+
             for (const p of chromePaths) {
                 if (fs.existsSync(p)) {
                     executablePath = p
@@ -421,7 +420,10 @@ export class MercadoLivreScraper {
         if (!description) {
             const descMatch = html.match(/<p[^>]*class="[^"]*ui-pdp-description__content[^"]*"[^>]*>([\s\S]*?)<\/p>/i)
             if (descMatch) {
-                description = descMatch[1].replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim()
+                description = descMatch[1]
+                    .replace(/<br\s*\/?>/gi, "\n")
+                    .replace(/<[^>]+>/g, "")
+                    .trim()
             }
         }
 
@@ -442,9 +444,13 @@ export class MercadoLivreScraper {
             priceValue = this.parsePrice(raw)
         }
         if (priceValue == null) {
-            const priceCurrentMatch = html.match(/<div[^>]+class="[^"]*ui-pdp-price__second-line[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+            const priceCurrentMatch = html.match(
+                /<div[^>]+class="[^"]*ui-pdp-price__second-line[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+            )
             if (priceCurrentMatch) {
-                const fractionMatch = priceCurrentMatch[1].match(/<span[^>]+andes-money-amount__fraction[^>]*>(\d+)<\/span>/i)
+                const fractionMatch = priceCurrentMatch[1].match(
+                    /<span[^>]+andes-money-amount__fraction[^>]*>(\d+)<\/span>/i,
+                )
                 const centsMatch = priceCurrentMatch[1].match(/<span[^>]+andes-money-amount__cents[^>]*>(\d+)<\/span>/i)
                 if (fractionMatch) {
                     const fraction = parseInt(fractionMatch[1], 10)
@@ -500,7 +506,9 @@ export class MercadoLivreScraper {
             }
         }
         if (images.length === 0) {
-            const imgMatches = [...html.matchAll(/<img[^>]+class="[^"]*ui-pdp-gallery__figure__image[^"]*"[^>]+src="([^"]+)"/gi)]
+            const imgMatches = [
+                ...html.matchAll(/<img[^>]+class="[^"]*ui-pdp-gallery__figure__image[^"]*"[^>]+src="([^"]+)"/gi),
+            ]
             for (const m of imgMatches) {
                 if (m[1] && m[1].startsWith("http") && !images.includes(m[1])) images.push(m[1])
             }
