@@ -144,6 +144,7 @@ Fecha o navegador Puppeteer subjacente e libera recursos de memória.
 ## 📄 Licença
 
 Distribuído sob a licença **MIT**. Desenvolvido com ❤️ pelo ecossistema **Afilimax**.
+
 ---
 
 ## Automatize sua operação de afiliados
