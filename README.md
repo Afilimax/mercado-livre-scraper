@@ -1,7 +1,11 @@
-# @afilimax/mercado-livre-scraper
+<a href="https://afilimax.net"><img src="https://raw.githubusercontent.com/Afilimax/.github/main/assets/npm-banner.svg" alt="Afilimax — Encontre a oferta. Gere o link. Divulgue sozinho." width="100%" /></a>
 
-[![NPM Version](https://img.shields.io/npm/v/@afilimax/mercado-livre-scraper.svg)](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/%40afilimax%2Fmercado-livre-scraper?logo=npm)](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper)
+[![npm downloads](https://img.shields.io/npm/dm/%40afilimax%2Fmercado-livre-scraper?logo=npm)](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Afilimax/mercado-livre-scraper/blob/HEAD/LICENSE)
+[![Website](https://img.shields.io/badge/website-afilimax.net-7857FF)](https://afilimax.net)
+
+# @afilimax/mercado-livre-scraper
 
 O `@afilimax/mercado-livre-scraper` é uma biblioteca TypeScript de alta performance e resiliência para busca e extração estruturada de dados de produtos do **Mercado Livre** (Mercado Libre), integrada ao ecossistema **Afilimax**.
 
@@ -140,3 +144,10 @@ Fecha o navegador Puppeteer subjacente e libera recursos de memória.
 ## 📄 Licença
 
 Distribuído sob a licença **MIT**. Desenvolvido com ❤️ pelo ecossistema **Afilimax**.
+---
+
+## Automatize sua operação de afiliados
+
+> Use este pacote para automatizar sua operação de afiliados. Conheça a plataforma Afilimax e transforme ofertas em links e divulgação automática.
+
+[Conheça a Afilimax](https://afilimax.net) · [Pacote no npm](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper) · [Repositório no GitHub](https://github.com/Afilimax/mercado-livre-scraper)
