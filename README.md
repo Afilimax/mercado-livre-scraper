@@ -1,142 +1,184 @@
+<a href="https://afilimax.net"><img src="https://raw.githubusercontent.com/Afilimax/.github/main/assets/npm-banner.svg" alt="Afilimax — Encontre a oferta. Gere o link. Divulgue sozinho." width="100%" /></a>
+
+[![npm version](https://img.shields.io/npm/v/%40afilimax%2Fmercado-livre-scraper?logo=npm)](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper)
+[![npm downloads](https://img.shields.io/npm/dm/%40afilimax%2Fmercado-livre-scraper?logo=npm)](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Afilimax/mercado-livre-scraper/blob/HEAD/LICENSE)
+[![Website](https://img.shields.io/badge/website-afilimax.net-7857FF)](https://afilimax.net)
+
 # @afilimax/mercado-livre-scraper
 
-[![NPM Version](https://img.shields.io/npm/v/@afilimax/mercado-livre-scraper.svg)](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Biblioteca TypeScript para pesquisar produtos e extrair páginas do Mercado Livre Brasil. O pacote automatiza o navegador com Puppeteer Stealth e combina dados estruturados JSON-LD com seletores HTML para produzir os contratos do `@afilimax/core`.
 
-O `@afilimax/mercado-livre-scraper` é uma biblioteca TypeScript de alta performance e resiliência para busca e extração estruturada de dados de produtos do **Mercado Livre** (Mercado Libre), integrada ao ecossistema **Afilimax**.
+## Recursos
 
-Projetada para contornar desafios avançados de segurança e verificações de automação (*bot challenges* / CAPTCHA), a biblioteca utiliza navegação automatizada com `puppeteer-extra` e `puppeteer-extra-plugin-stealth`. Ela opera com uma estratégia dupla de extração: parsing nativo de dados estruturados Schema.org (`JSON-LD` / `@graph`) com fallback automático para seletores HTML modernos dos cards de produto (`.poly-card`).
+- Busca de produtos com limite e deslocamento para paginação.
+- Extração de detalhes de um produto a partir da URL.
+- Navegação com `puppeteer-extra` e `puppeteer-extra-plugin-stealth`.
+- Extração prioritária de JSON-LD com fallback para cards HTML.
+- Normalização de preços, avaliações, imagens, estoque e informações de frete.
+- Identificação de IDs externos do Mercado Livre em diferentes formatos de URL.
+- Logs adicionais opcionais por meio da variável de ambiente `DEBUG`.
 
----
-
-## ✨ Principais Características
-
-- **🛡️ Evasão Anti-Bot Avançada**: Integração nativa com `puppeteer-extra-plugin-stealth` e flags de navegador para contornar verificações dinâmicas e bloqueios do Mercado Livre.
-- **⚡ Estratégia Dupla de Extração**:
-  - **Primária (JSON-LD)**: Extração rápida e precisa de blocos estruturados Schema.org (`@type: Product`).
-  - **Fallback (HTML Poly-Card)**: Extração resiliente via seletores dos cards modernos de listagem com cálculo de preços fracionados, centavos e descontos.
-- **🔍 Retorno Padronizado**: Resultados entregues no formato universal `ScrapedProductPreview` do `@afilimax/core`.
-- **🇧🇷 Focado no Mercado Livre Brasil**: Extração direcionada exclusivamente para o catálogo brasileiro (`mercadolivre.com.br`).
-- **📦 100% TypeScript**: Tipagem estrita com autocompletar e validação de contratos.
-
----
-
-## 🚀 Instalação
+## Instalação
 
 ```bash
-npm install @afilimax/mercado-livre-scraper
+npm install @afilimax/mercado-livre-scraper @afilimax/core
 ```
 
-> [!IMPORTANT]
-> Este pacote utiliza o `@afilimax/core` como dependência de par (*peer dependency*). Certifique-se de tê-lo instalado no seu projeto:
-> ```bash
-> npm install @afilimax/core
-> ```
+O `@afilimax/core` é uma dependência de par obrigatória, na versão `^0.5.0`.
 
----
+## Como usar
 
-## 🛠️ Como Usar
-
-### Exemplo Básico de Busca de Produtos
+### Pesquisar produtos
 
 ```typescript
-import { MercadoLivreScraper } from "@afilimax/mercado-livre-scraper";
+import { MercadoLivreScraper } from "@afilimax/mercado-livre-scraper"
 
-async function run() {
-    // Inicializa o scraper
-    const scraper = new MercadoLivreScraper();
+async function main() {
+    const scraper = new MercadoLivreScraper({ headless: true })
 
     try {
-        console.log("Pesquisando produtos...");
-
         const products = await scraper.searchProducts({
-            query: "Echo Dot 5ª Geração",
-            limit: 5
-        });
+            query: "smart tv 55",
+            limit: 5,
+            offset: 0,
+        })
 
-        console.log(`Encontrados ${products.length} produtos:`);
-        console.log(JSON.stringify(products, null, 2));
+        console.log("Products found:", products.length)
+        console.log(JSON.stringify(products, null, 2))
     } catch (error) {
-        console.error("Erro na busca:", error);
+        console.error("Search failed:", error)
     } finally {
-        // Encerra a instância do navegador Puppeteer
-        await scraper.close();
+        await scraper.close()
     }
 }
 
-run();
+main()
 ```
 
-### Busca Paginada / Offset
+Para consultar a próxima página de dez resultados, use `offset: 10`.
+
+### Extrair um produto
 
 ```typescript
-const page2Products = await scraper.searchProducts({
-    query: "Smart TV 55",
-    limit: 10,
-    offset: 10 // Pula os primeiros 10 itens
-});
+const product = await scraper.getProduct({
+    url: "https://www.mercadolivre.com.br/p/MLB72297423",
+})
+
+console.log("Product title:", product.title)
+console.log("Current price:", product.price.value)
 ```
 
----
+Chame `close()` ao finalizar para encerrar o navegador compartilhado entre as chamadas.
 
-## 📋 API Reference
+## Configuração
 
-### `MercadoLivreScraper`
+O construtor aceita `MercadoLivreScraperOptions`:
 
-#### `constructor(options?: MercadoLivreScraperOptions)`
-
-Inicializa a instância do scraper para o Mercado Livre Brasil.
-
-#### `searchProducts(options: MercadoLivreScraperSearchProductsOptions): Promise<ScrapedProductPreview[]>`
-
-Realiza a busca de produtos na listagem do Mercado Livre Brasil e retorna uma lista padronizada.
-
-| Parâmetro | Tipo | Padrão | Descrição |
+| Opção | Tipo | Padrão | Descrição |
 | :--- | :--- | :--- | :--- |
-| `query` | `string` | **Obrigatório** | Termo de pesquisa (ex: `"notebook i5"`). |
-| `limit` | `number` | `20` | Quantidade máxima de itens a retornar. |
-| `offset` | `number` | `0` | Deslocamento inicial para paginação. |
+| `headless` | `boolean \| "shell"` | `true` | Modo de execução do navegador. Use `false` para acompanhar a automação. |
+
+O scraper procura o Chrome nos caminhos usuais do Windows e, quando não o encontra, utiliza a resolução padrão do Puppeteer. Defina `DEBUG=1` para exibir diagnósticos da URL final e das estratégias de extração.
+
+## Referência da API
+
+### Métodos
+
+#### `searchProducts(options): Promise<ScrapedProductPreview[]>`
+
+Pesquisa produtos no Mercado Livre Brasil. O método tenta primeiro os blocos JSON-LD e depois os cards HTML quando necessário.
+
+| Opção | Tipo | Padrão | Descrição |
+| :--- | :--- | :--- | :--- |
+| `query` | `string` | Obrigatório | Termo de pesquisa. |
+| `limit` | `number` | `20` | Quantidade máxima de itens retornados. |
+| `offset` | `number` | `0` | Quantidade de resultados ignorados no início da listagem. |
+
+A navegação da busca usa tempo limite de 30 segundos. Redirecionamentos para CAPTCHA ou verificação de conta interrompem a extração da página e resultam em uma lista vazia.
+
+#### `getProduct(options): Promise<ScrapedProduct>`
+
+Abre uma página de produto, aguarda o conteúdo principal e retorna os dados normalizados.
+
+| Opção | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `url` | `string` | URL do produto no Mercado Livre. |
+
+A navegação do produto usa tempo limite de 35 segundos.
 
 #### `close(): Promise<void>`
 
-Fecha o navegador Puppeteer subjacente e libera recursos de memória.
+Fecha a instância do navegador, quando aberta, e limpa a referência interna.
 
----
+### Estrutura do retorno
 
-## 🗃️ Estrutura do Objeto Retornado (`ScrapedProductPreview`)
+`getProduct` retorna o contrato `ScrapedProduct`. Exemplo da estrutura produzida:
 
 ```typescript
-{
+const product = {
     marketplace: "mercado_livre",
     externalId: "MLB72297423",
-    title: "Alexa Echo Dot 5ª Geração Preta Controle Por Movimento E Cor Branco",
-    url: "https://www.mercadolivre.com.br/alexa-echo-dot-5-geracao-preta-controle-por-movimento-e-cor-branco/p/MLB72297423",
-    thumbnail: "https://http2.mlstatic.com/D_NQ_NP_856189-MLA111682464874_062026-F.jpg",
+    title: "Smart Speaker with Voice Assistant",
+    description: "Smart speaker with integrated voice control",
+    brand: "Example Brand",
     price: {
-        value: 468.00,
-        originalValue: null,
-        currency: "BRL"
+        value: 468,
+        originalValue: 549,
+        currency: "BRL",
+        pixPrice: null,
+        installment: { count: 10, value: 46.8 },
+    },
+    shipping: {
+        price: 0,
+        currency: "BRL",
+        freeShipping: true,
+        full: true,
+        prime: null,
+        estimatedTime: null,
     },
     rating: {
         average: 4.9,
-        totalReviews: 698
+        totalReviews: 698,
     },
-    brand: "Amazon",
-    scrapedAt: "2026-10-17T21:34:16.832Z"
+    availability: {
+        inStock: true,
+        quantity: null,
+    },
+    images: ["https://http2.mlstatic.com/example-product.jpg"],
+    thumbnails: ["https://http2.mlstatic.com/example-product.jpg"],
+    categories: null,
+    features: null,
+    specifications: null,
+    coupons: null,
+    scrapedAt: "2026-10-17T21:34:16.832Z",
 }
 ```
 
+Campos ausentes na página recebem `null` ou valores vazios conforme o contrato. A busca retorna `ScrapedProductPreview[]`, com `marketplace`, `externalId`, `title`, `url`, `thumbnail`, `price`, `rating`, `brand` e `scrapedAt`.
+
+## Desenvolvimento
+
+Instale as dependências com `npm install`. Os scripts disponíveis são:
+
+| Comando | Finalidade |
+| :--- | :--- |
+| `npm run dev` | Executa `src/index.ts` com `ts-node`. |
+| `npm run build` | Compila o TypeScript para `dist/`. |
+| `npm test` | Executa os testes com Vitest. |
+| `npm run test:watch` | Executa os testes em modo de observação. |
+| `npm run test:cov` | Executa os testes com cobertura. |
+| `npm run lint` | Executa o ESLint com correção automática. |
+| `npm run format` | Formata os arquivos de `src/` com Prettier. |
+
+## Licença
+
+Distribuído sob a licença [MIT](./LICENSE).
+
 ---
 
-## 🧪 Scripts do Projeto
+## Automatize sua operação de afiliados
 
-- `npm run build`: Compila os arquivos TypeScript gerando a pasta `dist`.
-- `npm run test`: Executa os testes automatizados com o Vitest.
-- `npm run lint`: Valida as regras de linting com ESLint.
-- `npm run format`: Formata o código com Prettier.
+> Use este pacote para automatizar sua operação de afiliados. Conheça a plataforma Afilimax e transforme ofertas em links e divulgação automática.
 
----
-
-## 📄 Licença
-
-Distribuído sob a licença **MIT**. Desenvolvido com ❤️ pelo ecossistema **Afilimax**.
+[Conheça a Afilimax](https://afilimax.net) · [Pacote no npm](https://www.npmjs.com/package/@afilimax/mercado-livre-scraper) · [Repositório no GitHub](https://github.com/Afilimax/mercado-livre-scraper)
